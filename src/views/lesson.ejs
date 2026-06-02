@@ -1,0 +1,73 @@
+<%- include('./partials/header') %>
+
+  <section class="page-hero" style="padding-bottom:1.5rem;">
+    <div class="hero-tag" id="lesson-tag">🤖 AI Tutor</div>
+    <h1>Ask Your <em>AI Tutor</em></h1>
+    <p>Ask any question about your studies and get a clear, helpful explanation.</p>
+  </section>
+
+  <div class="page-section" style="max-width:760px;">
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div id="chat-messages" style="min-height:300px;max-height:500px;overflow-y:auto;display:flex;flex-direction:column;gap:1rem;margin-bottom:1.5rem;padding:0.5rem;">
+        <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:var(--radius-sm);padding:1rem;">
+          <strong style="color:var(--teal);">EduStar AI</strong>
+          <p style="margin-top:0.5rem;color:var(--text);line-height:1.7;">Hi! I'm your AI tutor. Ask me anything about your studies — maths, science, history, languages, or any subject. I'll explain it clearly at your level. What would you like to learn today?</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.8rem;">
+        <input type="text" id="chat-input" class="form-input" placeholder="Ask a question about any subject..." style="flex:1;"
+          onkeydown="if(event.key==='Enter')sendMessage()">
+        <button class="btn btn-primary" onclick="sendMessage()" id="send-btn">Send</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+      <span style="font-size:0.8rem;color:var(--muted);">Try asking:</span>
+      <button class="btn btn-sm btn-secondary" onclick="prefill('Explain photosynthesis in simple terms')">Photosynthesis</button>
+      <button class="btn btn-sm btn-secondary" onclick="prefill('How do I solve quadratic equations?')">Quadratic equations</button>
+      <button class="btn btn-sm btn-secondary" onclick="prefill('What caused World War 1?')">World War 1</button>
+      <button class="btn btn-sm btn-secondary" onclick="prefill('Explain supply and demand')">Supply and demand</button>
+    </div>
+  </div>
+
+  <script>
+    const messages = [];
+    function prefill(text) {
+      document.getElementById('chat-input').value = text;
+      document.getElementById('chat-input').focus();
+    }
+    function addMessage(role, text) {
+      const box = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.style.cssText = role === 'user'
+        ? 'background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);border-radius:var(--radius-sm);padding:1rem;align-self:flex-end;max-width:85%;'
+        : 'background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:var(--radius-sm);padding:1rem;';
+      div.innerHTML = `<strong style="color:${role==='user'?'var(--sun)':'var(--teal)'}">${role==='user'?'You':'EduStar AI'}</strong><p style="margin-top:0.5rem;color:var(--text);line-height:1.7;white-space:pre-wrap;">${text.replace(/</g,'&lt;')}</p>`;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+    async function sendMessage() {
+      const input = document.getElementById('chat-input');
+      const text  = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      addMessage('user', text);
+      messages.push({ role:'user', content:text });
+      const btn = document.getElementById('send-btn');
+      btn.disabled = true; btn.textContent = '...';
+      const student = JSON.parse(localStorage.getItem('edustar_current') || 'null');
+      const system  = student
+        ? `You are EduStar's AI tutor for a ${student.grade} student in ${COUNTRY_NAMES[student.country]||student.country}. Adapt your explanations to their level. Keep responses clear and encouraging.`
+        : undefined;
+      try {
+        const res  = await fetch('/api/ai/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ messages, system }) });
+        const data = await res.json();
+        const reply = data.ok ? data.content[0].text : "Sorry, I'm having trouble right now. Please try again!";
+        addMessage('assistant', reply);
+        messages.push({ role:'assistant', content:reply });
+      } catch(e) { addMessage('assistant',"Connection error. Please check your internet and try again."); }
+      btn.disabled = false; btn.textContent = 'Send';
+    }
+  </script>
+
+<%- include('./partials/footer') %>

@@ -1,0 +1,110 @@
+<%- include('./partials/header') %>
+
+  <section class="page-hero">
+    <div class="hero-tag">🔑 Your Account</div>
+    <h1>Welcome to <em>EduStar</em></h1>
+    <p>Sign in to your account or create a free one to start learning.</p>
+  </section>
+
+  <div class="page-section" style="max-width:480px;">
+    <div id="portal-tabs" style="display:flex;gap:0.5rem;margin-bottom:2rem;">
+      <button class="btn btn-primary" id="tab-login" onclick="showTab('login')">Log In</button>
+      <button class="btn btn-secondary" id="tab-register" onclick="showTab('register')">Create Account</button>
+    </div>
+
+    <!-- Login Form -->
+    <div id="form-login" class="card">
+      <h2 style="font-family:'Syne',sans-serif;margin-bottom:1.5rem;">Log In</h2>
+      <div id="login-error" style="display:none;color:#ff6b6b;margin-bottom:1rem;font-size:0.9rem;"></div>
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <input type="email" id="login-email" placeholder="Email address" class="form-input">
+        <input type="password" id="login-password" placeholder="Password" class="form-input">
+        <button class="btn btn-primary" onclick="handleLogin()">🔑 Log In</button>
+      </div>
+    </div>
+
+    <!-- Register Form -->
+    <div id="form-register" class="card" style="display:none;">
+      <h2 style="font-family:'Syne',sans-serif;margin-bottom:1.5rem;">Create Free Account</h2>
+      <div id="register-error" style="display:none;color:#ff6b6b;margin-bottom:1rem;font-size:0.9rem;"></div>
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <input type="text" id="reg-name" placeholder="Full name" class="form-input">
+        <input type="email" id="reg-email" placeholder="Email address" class="form-input">
+        <input type="password" id="reg-password" placeholder="Password (min 8 characters)" class="form-input">
+        <select id="reg-country" class="form-input">
+          <option value="">Select your country</option>
+          <option value="ZW">🇿🇼 Zimbabwe</option>
+          <option value="ZM">🇿🇲 Zambia</option>
+          <option value="KE">🇰🇪 Kenya</option>
+          <option value="NG">🇳🇬 Nigeria</option>
+          <option value="ZA">🇿🇦 South Africa</option>
+          <option value="TZ">🇹🇿 Tanzania</option>
+          <option value="UG">🇺🇬 Uganda</option>
+          <option value="GH">🇬🇭 Ghana</option>
+          <option value="ET">🇪🇹 Ethiopia</option>
+          <option value="RW">🇷🇼 Rwanda</option>
+        </select>
+        <select id="reg-grade" class="form-input">
+          <option value="">Select your grade</option>
+          <optgroup label="Primary">
+            <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option>
+            <option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option>
+          </optgroup>
+          <optgroup label="Secondary">
+            <option>Grade 8</option><option>Grade 9</option><option>Grade 10</option>
+            <option>Grade 11</option><option>Grade 12</option>
+            <option>Form 1</option><option>Form 2</option><option>Form 3</option>
+            <option>Form 4</option><option>Form 5</option><option>Form 6</option>
+          </optgroup>
+        </select>
+        <button class="btn btn-primary" onclick="handleRegister()">✨ Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showTab(tab) {
+      document.getElementById('form-login').style.display    = tab === 'login'    ? 'block' : 'none';
+      document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+      document.getElementById('tab-login').className    = tab === 'login'    ? 'btn btn-primary' : 'btn btn-secondary';
+      document.getElementById('tab-register').className = tab === 'register' ? 'btn btn-primary' : 'btn btn-secondary';
+    }
+
+    async function handleLogin() {
+      const email    = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const errEl    = document.getElementById('login-error');
+      errEl.style.display = 'none';
+      try {
+        const res  = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
+        const data = await res.json();
+        if (!data.ok) { errEl.textContent = data.error; errEl.style.display = 'block'; return; }
+        localStorage.setItem('edustar_token', data.token);
+        localStorage.setItem('edustar_current', JSON.stringify(data.user));
+        window.location.href = '/dashboard';
+      } catch(e) { errEl.textContent = 'Connection error. Please try again.'; errEl.style.display = 'block'; }
+    }
+
+    async function handleRegister() {
+      const name     = document.getElementById('reg-name').value.trim();
+      const email    = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const country  = document.getElementById('reg-country').value;
+      const grade    = document.getElementById('reg-grade').value;
+      const errEl    = document.getElementById('register-error');
+      errEl.style.display = 'none';
+      if (!name || !email || !password || !country || !grade) {
+        errEl.textContent = 'Please fill in all fields.'; errEl.style.display = 'block'; return;
+      }
+      try {
+        const res  = await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, email, password, country, grade }) });
+        const data = await res.json();
+        if (!data.ok) { errEl.textContent = data.error; errEl.style.display = 'block'; return; }
+        localStorage.setItem('edustar_token', data.token);
+        localStorage.setItem('edustar_current', JSON.stringify(data.user));
+        window.location.href = '/dashboard';
+      } catch(e) { errEl.textContent = 'Connection error. Please try again.'; errEl.style.display = 'block'; }
+    }
+  </script>
+
+<%- include('./partials/footer') %>

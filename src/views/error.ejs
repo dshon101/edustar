@@ -1,0 +1,12 @@
+<%- include('./partials/header') %>
+
+  <section class="page-hero">
+    <div class="hero-tag">⚠️ Oops</div>
+    <h1><em><%= title || 'Something went wrong' %></em></h1>
+    <p><%= message || 'An unexpected error occurred. Please try again.' %></p>
+    <div style="margin-top:2rem;">
+      <a href="/" class="btn btn-primary">← Go Home</a>
+    </div>
+  </section>
+
+<%- include('./partials/footer') %>

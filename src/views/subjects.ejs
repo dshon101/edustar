@@ -1,0 +1,49 @@
+<%- include('./partials/header') %>
+
+  <section class="page-hero">
+    <div class="hero-tag" id="hero-tag">📚 Subjects</div>
+    <h1>Choose Your <em>Subject</em></h1>
+    <p id="page-desc">Curriculum-aligned lessons for your grade level and country.</p>
+  </section>
+
+  <div class="page-section">
+    <div class="category-tabs" id="cat-tabs">
+      <button class="cat-tab active" onclick="filterCat('all',this)">🌟 All</button>
+      <button class="cat-tab" onclick="filterCat('core',this)">📐 Core</button>
+      <button class="cat-tab" onclick="filterCat('sciences',this)">🔬 Sciences</button>
+      <button class="cat-tab" onclick="filterCat('commerce',this)">💼 Commerce</button>
+      <button class="cat-tab" onclick="filterCat('humanities',this)">🌍 Humanities</button>
+    </div>
+    <div class="subjects-grid" id="subjects-grid"></div>
+  </div>
+
+  <script>
+    let currentCat = 'all';
+    function filterCat(cat, el) {
+      currentCat = cat;
+      document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      renderSubjects(cat);
+    }
+    function renderSubjects(cat) {
+      const filtered = cat === 'all' ? ALL_SUBJECTS : ALL_SUBJECTS.filter(s => s.category === cat);
+      const grid = document.getElementById('subjects-grid');
+      grid.innerHTML = filtered.map(s =>
+        `<a href="/lesson?subject=${s.id}" class="subject-card">
+          <div class="subject-icon">${s.icon}</div>
+          <div class="subject-name">${s.name}</div>
+          <div class="subject-desc">${s.desc}</div>
+          <div class="subject-badge ${s.badge.cls}">${s.badge.text}</div>
+        </a>`).join('');
+    }
+    window.addEventListener('load', () => {
+      const student = JSON.parse(localStorage.getItem('edustar_current') || 'null');
+      if (student) {
+        const flag = COUNTRY_FLAGS[student.country] || '🌍';
+        document.getElementById('hero-tag').textContent = `${flag} ${student.country} · ${student.grade}`;
+      }
+      renderSubjects('all');
+    });
+  </script>
+
+<%- include('./partials/footer') %>

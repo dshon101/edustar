@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="<%= metaDesc %>">
+  <title><%= title %> | EduStar</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⭐</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/normalize.css">
+  <link rel="stylesheet" href="/styles/small.css">
+  <link rel="stylesheet" href="/styles/large.css">
+</head>
+<body>
+<div class="app">
+  <nav class="site-nav" aria-label="Main navigation">
+    <a class="nav-logo" href="/" aria-label="EduStar home">⚡ EduStar</a>
+    <button class="hamburger" aria-label="Toggle navigation" aria-expanded="false" aria-controls="main-nav">☰</button>
+    <div class="nav-links" id="main-nav" role="list">
+      <a href="/" role="listitem">Home</a>
+      <a href="/books" role="listitem">Books</a>
+      <a href="/subjects" role="listitem">Subjects</a>
+      <a href="/about" role="listitem">About</a>
+      <a href="/portal" role="listitem" style="font-weight:600;" id="nav-auth-btn">🔑 Log In</a>
+    </div>
+  </nav>
