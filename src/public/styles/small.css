@@ -935,3 +935,187 @@ select option { background: var(--sky); color: var(--text); }
   margin-bottom: 0.5rem;
   font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
 }
+
+/* ── FLOATING AI BUTTON ────────────────────────────────────── */
+.ai-fab {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--sun), var(--gold));
+  color: white;
+  text-decoration: none;
+  font-size: 1.4rem;
+  padding: 0.75rem 1.2rem;
+  border-radius: 50px;
+  box-shadow: 0 6px 24px rgba(255, 107, 43, 0.45);
+  transition: all 0.25s;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+}
+
+.ai-fab:hover {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 10px 32px rgba(255, 107, 43, 0.6);
+}
+
+.ai-fab-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+/* Hide label on very small screens */
+@media (max-width: 380px) {
+  .ai-fab-label { display: none; }
+  .ai-fab { padding: 0.85rem; border-radius: 50%; font-size: 1.5rem; }
+}
+
+/* ── BOOKS GRID IMPROVEMENTS ───────────────────────────────── */
+.books-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.book-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  transition: all 0.25s;
+  text-decoration: none;
+}
+
+.book-card:hover {
+  border-color: rgba(255, 107, 43, 0.35);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.book-icon {
+  font-size: 2rem;
+  margin-bottom: 0.3rem;
+}
+
+.book-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.book-desc {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.book-meta {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.book-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 50px;
+  background: rgba(255, 107, 43, 0.12);
+  color: var(--sun);
+  border: 1px solid rgba(255, 107, 43, 0.2);
+}
+
+/* ── SUBJECT CARDS IMPROVEMENTS ────────────────────────────── */
+.subjects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.subject-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.4rem 1rem;
+  text-align: center;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.25s;
+}
+
+.subject-card:hover {
+  border-color: rgba(255, 107, 43, 0.35);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.subject-icon {
+  font-size: 2.2rem;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+  line-height: 1;
+}
+
+.subject-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.subject-desc {
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.subject-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 50px;
+  margin-top: 0.3rem;
+}
+
+.badge-core     { background: rgba(255,107,43,0.12); color: var(--sun); border: 1px solid rgba(255,107,43,0.2); }
+.badge-sciences { background: rgba(0,201,167,0.12);  color: var(--teal); border: 1px solid rgba(0,201,167,0.2); }
+.badge-commerce { background: rgba(245,166,35,0.12); color: var(--gold); border: 1px solid rgba(245,166,35,0.2); }
+.badge-humanities { background: rgba(120,120,255,0.12); color: #a0a0ff; border: 1px solid rgba(120,120,255,0.2); }
+
+/* ── TOAST NOTIFICATIONS ───────────────────────────────────── */
+.toast-wrap {
+  position: fixed;
+  bottom: 5rem;
+  right: 1.5rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toast {
+  background: rgba(30, 30, 50, 0.95);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 1.1rem;
+  font-size: 0.85rem;
+  color: var(--text);
+  backdrop-filter: blur(10px);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
