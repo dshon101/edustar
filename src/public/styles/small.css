@@ -928,3 +928,10 @@ select option { background: var(--sky); color: var(--text); }
 
 /* ── FEATURES GRID ─────────────────────────────────────────── */
 .features-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 1.2rem; }
+
+/*Subject*/
+.subject-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+}
