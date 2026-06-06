@@ -1,7 +1,6 @@
 // nav.js — Shared navigation module
-// WDD231 EduStar Project
 
-export function initNav(activePage) {
+function initNav(activePage) {
   const links = document.querySelectorAll('.nav-links a');
   links.forEach(link => {
     if (link.dataset.page === activePage) {
@@ -30,7 +29,7 @@ export function initNav(activePage) {
   }
 }
 
-export function showToast(message, icon = '✅') {
+function showToast(message, icon = '✅') {
   const wrap = document.querySelector('.toast-wrap');
   if (!wrap) return;
 
