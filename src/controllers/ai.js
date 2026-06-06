@@ -56,7 +56,6 @@ const askTutor = async (req, res) => {
 };
 
 async function callOpenAI(messages, system) {
-    const { default: fetch } = await import('node-fetch');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -76,7 +75,6 @@ async function callOpenAI(messages, system) {
 }
 
 async function callPollinations(messages, system) {
-    const { default: fetch } = await import('node-fetch');
     const response = await fetch('https://text.pollinations.ai/openai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
