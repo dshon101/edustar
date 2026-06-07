@@ -35,4 +35,11 @@ const showAboutPage = (req, res) => {
     });
 };
 
-export { showHomePage, showDashboardPage, showSubjectsPage, showLessonPage, showAboutPage };
+const showQuizPage = (req, res) => {
+  res.render('quiz', {
+    title: 'Quiz',
+    metaDesc: 'Test your knowledge with AI-generated quizzes aligned to your curriculum.'
+  });
+};
+
+export { showHomePage, showDashboardPage, showSubjectsPage, showLessonPage, showAboutPage, showQuizPage };
