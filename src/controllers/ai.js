@@ -25,7 +25,6 @@ const askTutor = async (req, res) => {
 
     const systemPrompt = system || DEFAULT_SYSTEM_PROMPT;
 
-    // Sanitize messages
     const cleanMessages = messages
         .filter(m => m.role && m.content && typeof m.content === 'string')
         .map(m => ({
@@ -44,13 +43,11 @@ const askTutor = async (req, res) => {
             if (result) return res.json({ ok: true, content: [{ type: 'text', text: result }] });
         }
 
-        // Try Pollinations endpoint 1
-        const result = await callPollinations(cleanMessages, systemPrompt);
-        if (result) return res.json({ ok: true, content: [{ type: 'text', text: result }] });
-
-        // Try Pollinations simple endpoint as backup
-        const result2 = await callPollinationsBackup(cleanMessages, systemPrompt);
-        if (result2) return res.json({ ok: true, content: [{ type: 'text', text: result2 }] });
+        // Try Groq (free)
+        if (process.env.GROQ_API_KEY) {
+            const result = await callGroq(cleanMessages, systemPrompt);
+            if (result) return res.json({ ok: true, content: [{ type: 'text', text: result }] });
+        }
 
         res.status(503).json({ ok: false, error: 'AI service temporarily unavailable. Please try again.' });
     } catch (error) {
@@ -86,48 +83,29 @@ async function callOpenAI(messages, system) {
     }
 }
 
-async function callPollinations(messages, system) {
+async function callGroq(messages, system) {
     try {
-        const response = await fetch('https://text.pollinations.ai/openai', {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+            },
             body: JSON.stringify({
-                model: 'openai',
-                messages: [{ role: 'system', content: system }, ...messages],
-                seed: 42,
-                private: true
+                model: 'llama3-8b-8192',
+                max_tokens: 1200,
+                messages: [{ role: 'system', content: system }, ...messages]
             }),
             signal: AbortSignal.timeout(30000)
         });
         if (!response.ok) {
-            console.error('Pollinations error:', response.status, await response.text());
+            console.error('Groq error:', response.status, await response.text());
             return null;
         }
         const data = await response.json();
         return data.choices?.[0]?.message?.content || null;
     } catch (e) {
-        console.error('Pollinations fetch failed:', e.message);
-        return null;
-    }
-}
-
-async function callPollinationsBackup(messages, system) {
-    try {
-        // Simple text endpoint as backup
-        const lastMessage = messages[messages.length - 1].content;
-        const prompt = `${system}\n\nStudent asks: ${lastMessage}`;
-        const encoded = encodeURIComponent(prompt);
-        const response = await fetch(`https://text.pollinations.ai/${encoded}`, {
-            signal: AbortSignal.timeout(30000)
-        });
-        if (!response.ok) {
-            console.error('Pollinations backup error:', response.status);
-            return null;
-        }
-        const text = await response.text();
-        return text || null;
-    } catch (e) {
-        console.error('Pollinations backup failed:', e.message);
+        console.error('Groq fetch failed:', e.message);
         return null;
     }
 }
