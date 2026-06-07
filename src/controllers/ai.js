@@ -44,51 +44,92 @@ const askTutor = async (req, res) => {
             if (result) return res.json({ ok: true, content: [{ type: 'text', text: result }] });
         }
 
-        // Fall back to Pollinations (free)
+        // Try Pollinations endpoint 1
         const result = await callPollinations(cleanMessages, systemPrompt);
         if (result) return res.json({ ok: true, content: [{ type: 'text', text: result }] });
 
+        // Try Pollinations simple endpoint as backup
+        const result2 = await callPollinationsBackup(cleanMessages, systemPrompt);
+        if (result2) return res.json({ ok: true, content: [{ type: 'text', text: result2 }] });
+
         res.status(503).json({ ok: false, error: 'AI service temporarily unavailable. Please try again.' });
     } catch (error) {
-        console.error('AI tutor error:', error);
+        console.error('AI tutor error:', error.message);
         res.status(500).json({ ok: false, error: 'Something went wrong. Please try again.' });
     }
 };
 
 async function callOpenAI(messages, system) {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            max_tokens: 1200,
-            messages: [{ role: 'system', content: system }, ...messages]
-        }),
-        signal: AbortSignal.timeout(25000)
-    });
-    if (!response.ok) return null;
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || null;
+    try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                max_tokens: 1200,
+                messages: [{ role: 'system', content: system }, ...messages]
+            }),
+            signal: AbortSignal.timeout(25000)
+        });
+        if (!response.ok) {
+            console.error('OpenAI error:', response.status, await response.text());
+            return null;
+        }
+        const data = await response.json();
+        return data.choices?.[0]?.message?.content || null;
+    } catch (e) {
+        console.error('OpenAI fetch failed:', e.message);
+        return null;
+    }
 }
 
 async function callPollinations(messages, system) {
-    const response = await fetch('https://text.pollinations.ai/openai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            model: 'openai',
-            messages: [{ role: 'system', content: system }, ...messages],
-            seed: 42,
-            private: true
-        }),
-        signal: AbortSignal.timeout(30000)
-    });
-    if (!response.ok) return null;
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || null;
+    try {
+        const response = await fetch('https://text.pollinations.ai/openai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'openai',
+                messages: [{ role: 'system', content: system }, ...messages],
+                seed: 42,
+                private: true
+            }),
+            signal: AbortSignal.timeout(30000)
+        });
+        if (!response.ok) {
+            console.error('Pollinations error:', response.status, await response.text());
+            return null;
+        }
+        const data = await response.json();
+        return data.choices?.[0]?.message?.content || null;
+    } catch (e) {
+        console.error('Pollinations fetch failed:', e.message);
+        return null;
+    }
+}
+
+async function callPollinationsBackup(messages, system) {
+    try {
+        // Simple text endpoint as backup
+        const lastMessage = messages[messages.length - 1].content;
+        const prompt = `${system}\n\nStudent asks: ${lastMessage}`;
+        const encoded = encodeURIComponent(prompt);
+        const response = await fetch(`https://text.pollinations.ai/${encoded}`, {
+            signal: AbortSignal.timeout(30000)
+        });
+        if (!response.ok) {
+            console.error('Pollinations backup error:', response.status);
+            return null;
+        }
+        const text = await response.text();
+        return text || null;
+    } catch (e) {
+        console.error('Pollinations backup failed:', e.message);
+        return null;
+    }
 }
 
 export { askTutor };
