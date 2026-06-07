@@ -1,0 +1,290 @@
+<%- include('./partials/header') %>
+
+  <section class="page-hero">
+    <div class="hero-tag">🧠 Quiz</div>
+    <h1>Test Your <em>Knowledge</em></h1>
+    <p>Choose a subject and quiz length — earn XP for every correct answer!</p>
+  </section>
+
+  <div class="page-section" style="max-width:760px;">
+
+    <!-- Quiz Setup -->
+    <div id="quiz-setup" class="card" style="margin-bottom:1.5rem;">
+      <h2 style="font-family:'Syne',sans-serif;margin-bottom:1.5rem;">⚙️ Set Up Your Quiz</h2>
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <div>
+          <label style="color:var(--muted);font-size:0.85rem;margin-bottom:0.4rem;display:block;">Subject</label>
+          <select id="quiz-subject" class="filter-select" style="width:100%;">
+            <option value="Mathematics">📐 Mathematics</option>
+            <option value="English">📝 English Language</option>
+            <option value="Science">🔬 Science</option>
+            <option value="Biology">🧬 Biology</option>
+            <option value="Chemistry">⚗️ Chemistry</option>
+            <option value="Physics">⚡ Physics</option>
+            <option value="History">🏛️ History</option>
+            <option value="Geography">🌍 Geography</option>
+          </select>
+        </div>
+        <div>
+          <label style="color:var(--muted);font-size:0.85rem;margin-bottom:0.4rem;display:block;">Number of Questions</label>
+          <select id="quiz-length" class="filter-select" style="width:100%;">
+            <option value="5">5 Questions (Quick)</option>
+            <option value="10" selected>10 Questions (Standard)</option>
+            <option value="15">15 Questions (Challenge)</option>
+            <option value="20">20 Questions (Full Test)</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="startQuiz()" id="start-btn">
+          🚀 Start Quiz
+        </button>
+      </div>
+    </div>
+
+    <!-- Quiz In Progress -->
+    <div id="quiz-area" style="display:none;">
+      <div class="quiz-header">
+        <div class="quiz-progress-info">
+          <span id="q-num">Question 1</span>
+          <span id="q-subject-tag" class="hero-tag" style="margin:0;"></span>
+        </div>
+        <div class="quiz-score-info">
+          Score: <span id="q-score">0</span>
+        </div>
+      </div>
+
+      <div class="quiz-progress-bar-wrap">
+        <div class="quiz-progress-bar" id="quiz-progress-bar"></div>
+      </div>
+
+      <div class="card" style="margin-top:1rem;" id="question-card">
+        <div id="q-type-badge" class="hero-tag" style="margin-bottom:1rem;"></div>
+        <h3 id="q-text" style="font-family:'Syne',sans-serif;font-size:1.1rem;line-height:1.6;margin-bottom:1.5rem;"></h3>
+        <div id="q-options" style="display:flex;flex-direction:column;gap:0.7rem;"></div>
+        <div id="q-feedback" style="display:none;margin-top:1rem;padding:1rem;border-radius:var(--radius-sm);font-weight:600;"></div>
+        <button class="btn btn-primary" id="next-btn" style="display:none;margin-top:1rem;" onclick="nextQuestion()">
+          Next Question →
+        </button>
+      </div>
+    </div>
+
+    <!-- Quiz Results -->
+    <div id="quiz-results" style="display:none;" class="card">
+      <div style="text-align:center;padding:1rem 0;">
+        <div style="font-size:3rem;margin-bottom:1rem;" id="result-emoji">🎉</div>
+        <h2 style="font-family:'Syne',sans-serif;font-size:1.8rem;margin-bottom:0.5rem;">Quiz Complete!</h2>
+        <p style="color:var(--muted);margin-bottom:2rem;" id="result-msg"></p>
+        <div class="dash-stats" style="margin-bottom:2rem;">
+          <div class="dash-stat-card">
+            <div class="dash-stat-num" id="res-score">0</div>
+            <div class="dash-stat-lbl">Score %</div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-num" id="res-correct">0</div>
+            <div class="dash-stat-lbl">Correct</div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-num" id="res-xp">0</div>
+            <div class="dash-stat-lbl">XP Earned</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="resetQuiz()">🔄 Try Again</button>
+          <a href="/dashboard" class="btn btn-secondary">📊 Dashboard</a>
+          <a href="/lesson" class="btn btn-secondary">🤖 Ask AI Tutor</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let questions = [];
+    let current   = 0;
+    let score     = 0;
+    let correct   = 0;
+    let answered  = false;
+
+    async function startQuiz() {
+      const subject = document.getElementById('quiz-subject').value;
+      const total   = parseInt(document.getElementById('quiz-length').value);
+      const btn     = document.getElementById('start-btn');
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Generating quiz...';
+
+      const student = JSON.parse(localStorage.getItem('edustar_current') || 'null');
+      const grade   = student?.grade || 'Form 4';
+
+      try {
+        const res  = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [{ role: 'user', content:
+              `Generate exactly ${total} quiz questions about ${subject} for a ${grade} student.
+               Mix multiple choice (label as "type":"mcq") and true/false (label as "type":"tf").
+               Respond ONLY with a valid JSON array. No explanation, no markdown, no backticks.
+               Format:
+               [
+                 {
+                   "type": "mcq",
+                   "question": "What is photosynthesis?",
+                   "options": ["A process in plants", "A type of rock", "A weather event", "A chemical reaction in animals"],
+                   "answer": 0,
+                   "explanation": "Photosynthesis is the process by which plants make food using sunlight."
+                 },
+                 {
+                   "type": "tf",
+                   "question": "The sun is a star.",
+                   "options": ["True", "False"],
+                   "answer": 0,
+                   "explanation": "The sun is indeed a star at the center of our solar system."
+                 }
+               ]`
+            }],
+            system: 'You are a quiz generator. Respond ONLY with a valid JSON array of questions. No markdown, no explanation, no backticks.'
+          })
+        });
+
+        const data = await res.json();
+        const text = data.content?.[0]?.text || '';
+
+        // Parse the JSON from AI response
+        const jsonMatch = text.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) throw new Error('Invalid response');
+        questions = JSON.parse(jsonMatch[0]);
+
+        if (!questions.length) throw new Error('No questions');
+
+        // Start quiz
+        current  = 0;
+        score    = 0;
+        correct  = 0;
+        answered = false;
+
+        document.getElementById('quiz-setup').style.display   = 'none';
+        document.getElementById('quiz-area').style.display    = 'block';
+        document.getElementById('quiz-results').style.display = 'none';
+        document.getElementById('q-subject-tag').textContent  = subject;
+
+        showQuestion();
+
+      } catch(e) {
+        btn.disabled    = false;
+        btn.textContent = '🚀 Start Quiz';
+        alert('Could not generate quiz. Please try again!');
+      }
+    }
+
+    function showQuestion() {
+      const q        = questions[current];
+      const total    = questions.length;
+      answered       = false;
+
+      document.getElementById('q-num').textContent        = `Question ${current + 1} of ${total}`;
+      document.getElementById('q-text').textContent       = q.question;
+      document.getElementById('q-type-badge').textContent = q.type === 'mcq' ? '🔤 Multiple Choice' : '✅ True / False';
+      document.getElementById('q-feedback').style.display = 'none';
+      document.getElementById('next-btn').style.display   = 'none';
+
+      // Progress bar
+      document.getElementById('quiz-progress-bar').style.width = ((current / total) * 100) + '%';
+      document.getElementById('q-score').textContent = score;
+
+      // Render options
+      const optContainer = document.getElementById('q-options');
+      optContainer.innerHTML = q.options.map((opt, i) => `
+        <button class="quiz-option" onclick="selectAnswer(${i})" data-index="${i}">
+          <span class="quiz-option-letter">${String.fromCharCode(65 + i)}</span>
+          <span>${opt}</span>
+        </button>
+      `).join('');
+    }
+
+    function selectAnswer(index) {
+      if (answered) return;
+      answered = true;
+
+      const q        = questions[current];
+      const correct_ = q.answer;
+      const isRight  = index === correct_;
+      const feedback = document.getElementById('q-feedback');
+      const options  = document.querySelectorAll('.quiz-option');
+
+      // Highlight correct and wrong
+      options.forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === correct_) btn.classList.add('quiz-option-correct');
+        if (i === index && !isRight) btn.classList.add('quiz-option-wrong');
+      });
+
+      if (isRight) {
+        correct++;
+        score += 10;
+        feedback.style.background = 'rgba(0,201,167,0.12)';
+        feedback.style.border     = '1px solid rgba(0,201,167,0.3)';
+        feedback.style.color      = 'var(--teal)';
+        feedback.textContent      = `✅ Correct! ${q.explanation || ''}`;
+      } else {
+        feedback.style.background = 'rgba(255,107,43,0.12)';
+        feedback.style.border     = '1px solid rgba(255,107,43,0.3)';
+        feedback.style.color      = 'var(--sun)';
+        feedback.textContent      = `❌ Not quite. ${q.explanation || ''} Correct answer: ${q.options[correct_]}`;
+      }
+
+      feedback.style.display = 'block';
+      document.getElementById('next-btn').style.display = 'block';
+      document.getElementById('next-btn').textContent   =
+        current + 1 >= questions.length ? '🏁 See Results' : 'Next Question →';
+    }
+
+    function nextQuestion() {
+      current++;
+      if (current >= questions.length) {
+        showResults();
+      } else {
+        showQuestion();
+      }
+    }
+
+    function showResults() {
+      document.getElementById('quiz-area').style.display    = 'none';
+      document.getElementById('quiz-results').style.display = 'block';
+
+      const total    = questions.length;
+      const pct      = Math.round((correct / total) * 100);
+      const xpEarned = score;
+
+      document.getElementById('res-score').textContent   = pct + '%';
+      document.getElementById('res-correct').textContent = `${correct}/${total}`;
+      document.getElementById('res-xp').textContent      = xpEarned;
+
+      let emoji = '😔';
+      let msg   = 'Keep practising — you will improve!';
+      if (pct >= 90) { emoji = '🏆'; msg = 'Outstanding! You are a star student!'; }
+      else if (pct >= 70) { emoji = '🎉'; msg = 'Great work! Keep it up!'; }
+      else if (pct >= 50) { emoji = '👍'; msg = 'Good effort! Review the topics and try again.'; }
+
+      document.getElementById('result-emoji').textContent = emoji;
+      document.getElementById('result-msg').textContent   = msg;
+
+      // Update student XP in localStorage
+      const student = JSON.parse(localStorage.getItem('edustar_current') || 'null');
+      if (student) {
+        student.points       = (student.points || 0) + xpEarned;
+        student.quizzes_taken = (student.quizzes_taken || 0) + 1;
+        student.level        = Math.floor(student.points / 500) + 1;
+        localStorage.setItem('edustar_current', JSON.stringify(student));
+      }
+    }
+
+    function resetQuiz() {
+      document.getElementById('quiz-setup').style.display   = 'block';
+      document.getElementById('quiz-area').style.display    = 'none';
+      document.getElementById('quiz-results').style.display = 'none';
+      document.getElementById('start-btn').disabled    = false;
+      document.getElementById('start-btn').textContent = '🚀 Start Quiz';
+    }
+  </script>
+
+<%- include('./partials/footer') %>

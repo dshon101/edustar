@@ -7,24 +7,73 @@
   </section>
 
   <div class="page-section">
-    <div class="progress-card">
-      <div class="progress-stats">
-        <div class="progress-stat"><div class="num" id="stat-points">0</div><div class="lbl">Points</div></div>
-        <div class="progress-stat"><div class="num" id="stat-level">1</div><div class="lbl">Level</div></div>
-        <div class="progress-stat"><div class="num" id="stat-quizzes">0</div><div class="lbl">Quizzes</div></div>
-        <div class="progress-stat"><div class="num" id="stat-lessons">0</div><div class="lbl">Lessons done</div></div>
+
+    <!-- Stats Cards -->
+    <div class="dash-stats">
+      <div class="dash-stat-card">
+        <div class="dash-stat-icon">⭐</div>
+        <div class="dash-stat-num" id="stat-points">0</div>
+        <div class="dash-stat-lbl">Points</div>
       </div>
-      <div class="xp-bar-wrap"><div class="xp-bar" id="xp-bar"></div></div>
-      <div class="xp-label"><span>Level <span id="xp-level">1</span></span><span id="xp-pts">0 / 500 XP</span></div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-icon">🏆</div>
+        <div class="dash-stat-num" id="stat-level">1</div>
+        <div class="dash-stat-lbl">Level</div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-icon">📝</div>
+        <div class="dash-stat-num" id="stat-quizzes">0</div>
+        <div class="dash-stat-lbl">Quizzes</div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-icon">📚</div>
+        <div class="dash-stat-num" id="stat-lessons">0</div>
+        <div class="dash-stat-lbl">Lessons done</div>
+      </div>
     </div>
 
-    <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:2rem;">
-      <a href="/subjects" class="btn btn-primary">📚 Continue Learning</a>
-      <a href="/books"    class="btn btn-secondary">📖 Browse Books</a>
-      <a href="/lesson"   class="btn btn-teal">🤖 Ask AI Tutor</a>
+    <!-- XP Progress Bar -->
+    <div class="xp-card">
+      <div class="xp-top">
+        <span class="xp-title">⚡ XP Progress</span>
+        <span class="xp-pts" id="xp-pts">0 / 500 XP</span>
+      </div>
+      <div class="xp-bar-wrap">
+        <div class="xp-bar" id="xp-bar" style="width:0%"></div>
+      </div>
+      <div class="xp-sub">Level <span id="xp-level">1</span> → Level <span id="xp-next">2</span></div>
     </div>
 
-    <div id="no-auth-msg" style="display:none;" class="card">
+    <!-- Quick Actions -->
+    <div class="dash-actions">
+      <a href="/subjects" class="dash-action-card">
+        <div class="dash-action-icon">📚</div>
+        <div class="dash-action-title">Continue Learning</div>
+        <div class="dash-action-desc">Pick up where you left off</div>
+      </a>
+      <a href="/quiz" class="dash-action-card dash-action-highlight">
+        <div class="dash-action-icon">🧠</div>
+        <div class="dash-action-title">Take a Quiz</div>
+        <div class="dash-action-desc">Test your knowledge and earn XP</div>
+      </a>
+      <a href="/books" class="dash-action-card">
+        <div class="dash-action-icon">📖</div>
+        <div class="dash-action-title">Browse Books</div>
+        <div class="dash-action-desc">Free curriculum textbooks</div>
+      </a>
+      <a href="/lesson" class="dash-action-card">
+        <div class="dash-action-icon">🤖</div>
+        <div class="dash-action-title">Ask AI Tutor</div>
+        <div class="dash-action-desc">Get instant homework help</div>
+      </a>
+    </div>
+
+    <!-- Logout -->
+    <div style="margin-top:2rem;">
+      <button class="btn btn-secondary btn-sm" onclick="logout()">🚪 Log Out</button>
+    </div>
+
+    <div id="no-auth-msg" style="display:none;" class="card" style="margin-top:2rem;">
       <p>You need to <a href="/portal" style="color:var(--sun);">log in</a> to see your dashboard.</p>
     </div>
   </div>
@@ -36,19 +85,29 @@
         document.getElementById('no-auth-msg').style.display = 'block';
         return;
       }
-      document.getElementById('student-name').textContent  = student.name?.split(' ')[0] || 'Student';
+      const first = student.name?.split(' ')[0] || 'Student';
+      document.getElementById('student-name').textContent  = first;
       document.getElementById('stat-points').textContent   = student.points  || 0;
       document.getElementById('stat-level').textContent    = student.level   || 1;
       document.getElementById('stat-quizzes').textContent  = student.quizzes_taken || 0;
       document.getElementById('stat-lessons').textContent  = (student.completed || []).length;
-      const xpNeeded = (student.level || 1) * 500;
-      const xpPct    = Math.min(((student.points || 0) % xpNeeded) / xpNeeded * 100, 100);
-      document.getElementById('xp-bar').style.width    = xpPct + '%';
-      document.getElementById('xp-level').textContent  = student.level || 1;
-      document.getElementById('xp-pts').textContent    = `${student.points || 0} / ${xpNeeded} XP`;
-      document.getElementById('hero-tag').textContent  =
-        `${student.country || '🌍'} · Grade ${student.grade || '—'}`;
+      document.getElementById('hero-tag').textContent      = `${student.country || '🌍'} · ${student.grade || '—'}`;
+
+      const level    = student.level   || 1;
+      const points   = student.points  || 0;
+      const xpNeeded = level * 500;
+      const xpPct    = Math.min((points % xpNeeded) / xpNeeded * 100, 100);
+      document.getElementById('xp-bar').style.width   = xpPct + '%';
+      document.getElementById('xp-level').textContent = level;
+      document.getElementById('xp-next').textContent  = level + 1;
+      document.getElementById('xp-pts').textContent   = `${points} / ${xpNeeded} XP`;
     });
+
+    function logout() {
+      localStorage.removeItem('edustar_token');
+      localStorage.removeItem('edustar_current');
+      window.location.href = '/';
+    }
   </script>
 
 <%- include('./partials/footer') %>
