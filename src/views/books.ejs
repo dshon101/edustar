@@ -7,9 +7,9 @@
   </section>
 
   <div class="page-section">
-    <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-bottom:2rem;" id="filter-bar">
-      <select id="filter-country" class="form-input" style="width:auto;" onchange="loadBooks()">
-        <option value="">All Countries</option>
+    <div class="filters-bar" id="filter-bar">
+      <select id="filter-country" class="filter-select" onchange="loadBooks()">
+        <option value="">🌍 All Countries</option>
         <option value="ZW">🇿🇼 Zimbabwe</option>
         <option value="ZM">🇿🇲 Zambia</option>
         <option value="KE">🇰🇪 Kenya</option>
@@ -17,15 +17,21 @@
         <option value="ZA">🇿🇦 South Africa</option>
         <option value="GH">🇬🇭 Ghana</option>
       </select>
-      <select id="filter-subject" class="form-input" style="width:auto;" onchange="loadBooks()">
-        <option value="">All Subjects</option>
-        <option>Mathematics</option><option>English</option><option>Science</option>
-        <option>Biology</option><option>Chemistry</option><option>Physics</option>
-        <option>History</option><option>Geography</option>
+      <select id="filter-subject" class="filter-select" onchange="loadBooks()">
+        <option value="">📖 All Subjects</option>
+        <option>Mathematics</option>
+        <option>English</option>
+        <option>Science</option>
+        <option>Biology</option>
+        <option>Chemistry</option>
+        <option>Physics</option>
+        <option>History</option>
+        <option>Geography</option>
       </select>
     </div>
 
-    <div id="books-grid" class="subjects-grid">
+    <div id="books-count" style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;"></div>
+    <div id="books-grid" class="books-grid">
       <p style="color:var(--muted);">Loading books...</p>
     </div>
   </div>
@@ -35,23 +41,39 @@
       const country = document.getElementById('filter-country').value;
       const subject = document.getElementById('filter-subject').value;
       const grid    = document.getElementById('books-grid');
+      const count   = document.getElementById('books-count');
       grid.innerHTML = '<p style="color:var(--muted);">Loading...</p>';
+      count.textContent = '';
 
       try {
         const qs   = new URLSearchParams({ country, subject }).toString();
         const res  = await fetch(`/api/books?${qs}`);
         const data = await res.json();
+
         if (!data.ok || !data.books.length) {
           grid.innerHTML = '<p style="color:var(--muted);">No books found. Try different filters.</p>';
           return;
         }
+
+        count.textContent = `Showing ${data.books.length} book${data.books.length !== 1 ? 's' : ''}`;
+
+        const countryNames = { ZW:'Zimbabwe', ZM:'Zambia', KE:'Kenya', NG:'Nigeria', ZA:'South Africa', GH:'Ghana', TZ:'Tanzania', UG:'Uganda', RW:'Rwanda', continental:'All Africa' };
+        const badgeClass   = { Mathematics:'badge-core', English:'badge-core', Science:'badge-sciences', Biology:'badge-sciences', Chemistry:'badge-sciences', Physics:'badge-sciences', History:'badge-humanities', Geography:'badge-humanities' };
+
         grid.innerHTML = data.books.map(b => `
-          <a href="${b.url || '#'}" target="_blank" rel="noopener" class="subject-card">
-            <div class="subject-icon">${b.icon || '📚'}</div>
-            <div class="subject-name">${b.title}</div>
-            <div class="subject-desc">${b.description || ''}</div>
-            <div class="subject-badge badge-orange" style="margin-top:0.5rem;">${b.country}</div>
-          </a>`).join('');
+          <div class="book-card">
+            <div class="book-icon">${b.icon || '📚'}</div>
+            <div class="book-title">${b.title}</div>
+            <div class="book-desc">${b.description || ''}</div>
+            <div class="book-meta">
+              <span class="book-tag">${countryNames[b.country] || b.country}</span>
+              <span class="book-tag">${b.grade_range || ''}</span>
+              <span class="book-tag ${badgeClass[b.subject] || 'badge-core'}">${b.subject}</span>
+            </div>
+            <a href="${b.url || '#'}" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="margin-top:1rem;width:100%;justify-content:center;">
+              📖 Open / Download
+            </a>
+          </div>`).join('');
       } catch(e) {
         grid.innerHTML = '<p style="color:var(--muted);">Could not load books. Please try again.</p>';
       }
