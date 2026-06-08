@@ -38,13 +38,21 @@ app.use(routes);
 
 // ── 404 handler ──────────────────────────────────────────────────
 app.use((req, res) => {
-    res.status(404).render('error', { title: 'Page Not Found', message: 'The page you are looking for does not exist.' });
+    res.status(404).render('error', {
+        title: 'Page Not Found',
+        metaDesc: 'Page not found.',
+        message: 'The page you are looking for does not exist.'
+    });
 });
 
 // ── 500 handler ──────────────────────────────────────────────────
 app.use((err, req, res, next) => {
     console.error('Server error:', err);
-    res.status(500).render('error', { title: 'Server Error', message: 'Something went wrong. Please try again later.' });
+    res.status(500).render('error', {
+        title: 'Server Error',
+        metaDesc: 'An error occurred.',
+        message: err.message || 'Something went wrong. Please try again later.'
+    });
 });
 
 // ── Start ────────────────────────────────────────────────────────
