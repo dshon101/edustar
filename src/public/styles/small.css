@@ -1499,3 +1499,41 @@ select option { background: var(--sky); color: var(--text); }
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0,201,167,0.35);
 }
+
+/* ── LESSON PAGE ───────────────────────────────────────────── */
+.lesson-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.lesson-subject-header {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.2rem 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.lesson-progress-bar-wrap {
+  background: rgba(255,255,255,0.06);
+  border-radius: 50px;
+  height: 6px;
+  overflow: hidden;
+}
+
+@media (min-width: 801px) {
+  .lesson-layout {
+    grid-template-columns: 1fr 280px;
+  }
+
+  .lesson-sidebar {
+    position: sticky;
+    top: 1rem;
+  }
+}

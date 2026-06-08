@@ -1,41 +1,811 @@
 <%- include('./partials/header') %>
 
-  <section class="page-hero" style="padding-bottom:1.5rem;">
-    <div class="hero-tag" id="lesson-tag">🤖 AI Tutor</div>
-    <h1>Ask Your <em>AI Tutor</em></h1>
-    <p>Ask any question about your studies and get a clear, helpful explanation.</p>
-  </section>
+  <div id="lesson-page" style="display:none;">
 
-  <div class="page-section" style="max-width:760px;">
-    <div class="card" style="margin-bottom:1.5rem;">
-      <div id="chat-messages" style="min-height:300px;max-height:500px;overflow-y:auto;display:flex;flex-direction:column;gap:1rem;margin-bottom:1.5rem;padding:0.5rem;">
-        <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:var(--radius-sm);padding:1rem;">
-          <strong style="color:var(--teal);">EduStar AI</strong>
-          <p style="margin-top:0.5rem;color:var(--text);line-height:1.7;">Hi! I'm your AI tutor. Ask me anything about your studies — maths, science, history, languages, or any subject. I'll explain it clearly at your level. What would you like to learn today?</p>
+    <!-- Breadcrumb -->
+    <div class="page-section" style="padding-bottom:0;padding-top:1.5rem;">
+      <nav style="font-size:0.85rem;color:var(--muted);margin-bottom:1.5rem;">
+        <a href="/dashboard" style="color:var(--sun);text-decoration:none;">Dashboard</a>
+        <span style="margin:0 0.5rem;">›</span>
+        <a href="/subjects" style="color:var(--sun);text-decoration:none;">Subjects</a>
+        <span style="margin:0 0.5rem;">›</span>
+        <span id="bc-subject" style="color:var(--text);"></span>
+      </nav>
+
+      <!-- Subject Header -->
+      <div class="lesson-subject-header" id="subject-header">
+        <div style="display:flex;align-items:center;gap:1rem;">
+          <div style="font-size:2.5rem;" id="subject-icon">📚</div>
+          <div>
+            <h2 id="subject-title" style="font-family:'Syne',sans-serif;font-size:1.4rem;margin:0;"></h2>
+            <p id="subject-meta" style="color:var(--muted);font-size:0.85rem;margin:0.3rem 0 0;"></p>
+          </div>
         </div>
-      </div>
-      <div style="display:flex;gap:0.8rem;">
-        <input type="text" id="chat-input" class="form-input" placeholder="Ask a question about any subject..." style="flex:1;"
-          onkeydown="if(event.key==='Enter')sendMessage()">
-        <button class="btn btn-primary" onclick="sendMessage()" id="send-btn">Send</button>
+        <span id="subject-badge" class="hero-tag" style="margin:0;"></span>
       </div>
     </div>
 
-    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-      <span style="font-size:0.8rem;color:var(--muted);">Try asking:</span>
-      <button class="btn btn-sm btn-secondary" onclick="prefill('Explain photosynthesis in simple terms')">Photosynthesis</button>
-      <button class="btn btn-sm btn-secondary" onclick="prefill('How do I solve quadratic equations?')">Quadratic equations</button>
-      <button class="btn btn-sm btn-secondary" onclick="prefill('What caused World War 1?')">World War 1</button>
-      <button class="btn btn-sm btn-secondary" onclick="prefill('Explain supply and demand')">Supply and demand</button>
+    <!-- Main Layout -->
+    <div class="lesson-layout page-section" style="padding-top:1.5rem;">
+
+      <!-- Lesson Content -->
+      <div class="lesson-main">
+        <div class="card" id="lesson-card">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
+            <h1 id="lesson-title" style="font-family:'Syne',sans-serif;font-size:1.4rem;margin:0;"></h1>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;" id="lesson-meta-tags"></div>
+          </div>
+          <div id="lesson-content" style="line-height:1.9;color:var(--text);"></div>
+          <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);">
+            <button class="btn btn-primary" id="complete-btn" onclick="markComplete()">
+              ✅ Mark as Complete (+50 pts)
+            </button>
+            <button class="btn btn-secondary" onclick="goToAITutor()">🤖 Ask AI Tutor</button>
+            <button class="btn btn-secondary" onclick="goToQuiz()">🧠 Quiz on This</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <aside class="lesson-sidebar">
+        <div class="card" style="padding:1.2rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+            <strong style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);">Lessons</strong>
+            <span id="sidebar-progress" style="font-size:0.8rem;color:var(--gold);font-weight:700;"></span>
+          </div>
+          <div class="lesson-progress-bar-wrap" style="margin-bottom:1rem;">
+            <div class="xp-bar" id="sidebar-xp-bar" style="width:0%;"></div>
+          </div>
+          <div id="lesson-list" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+          <div style="margin-top:1rem;display:flex;flex-direction:column;gap:0.5rem;">
+            <button class="btn btn-primary btn-sm" id="next-btn" onclick="nextLesson()" style="display:none;">
+              Next →
+            </button>
+            <a href="/quiz" class="btn btn-secondary btn-sm" style="text-align:center;">
+              🧠 Take a Quiz
+            </a>
+            <a href="/subjects" class="btn btn-secondary btn-sm" style="text-align:center;">
+              📚 All Subjects
+            </a>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- AI Chat fallback (no subject) -->
+  <div id="ai-page" style="display:none;">
+    <section class="page-hero" style="padding-bottom:1.5rem;">
+      <div class="hero-tag">🤖 AI Tutor</div>
+      <h1>Ask Your <em>AI Tutor</em></h1>
+      <p>Ask any question about your studies and get a clear, helpful explanation.</p>
+    </section>
+    <div class="page-section" style="max-width:760px;">
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div id="chat-messages" style="min-height:300px;max-height:500px;overflow-y:auto;display:flex;flex-direction:column;gap:1rem;margin-bottom:1.5rem;padding:0.5rem;">
+          <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:var(--radius-sm);padding:1rem;">
+            <strong style="color:var(--teal);">EduStar AI</strong>
+            <p style="margin-top:0.5rem;color:var(--text);line-height:1.7;">Hi! I'm your AI tutor. Ask me anything about your studies — maths, science, history, languages, or any subject. I'll explain it clearly at your level. What would you like to learn today?</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.8rem;">
+          <input type="text" id="chat-input" class="form-input" placeholder="Ask a question about any subject..." style="flex:1;"
+            onkeydown="if(event.key==='Enter')sendMessage()">
+          <button class="btn btn-primary" onclick="sendMessage()" id="send-btn">Send</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <span style="font-size:0.8rem;color:var(--muted);">Try asking:</span>
+        <button class="btn btn-sm btn-secondary" onclick="prefill('Explain photosynthesis in simple terms')">Photosynthesis</button>
+        <button class="btn btn-sm btn-secondary" onclick="prefill('How do I solve quadratic equations?')">Quadratic equations</button>
+        <button class="btn btn-sm btn-secondary" onclick="prefill('What caused World War 1?')">World War 1</button>
+        <button class="btn btn-sm btn-secondary" onclick="prefill('Explain supply and demand')">Supply and demand</button>
+      </div>
     </div>
   </div>
 
   <script>
-    const messages = [];
+    // ── Lesson Data ──────────────────────────────────────────────
+    const LESSONS = {
+      math: {
+        name: 'Mathematics', icon: '📐', badge: 'Core',
+        lessons: [
+          {
+            id: 'math-1', title: 'Understanding Fractions',
+            meta: ['⏱ 25 min', '⭐ +50 pts', '📐 Mathematics'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">What is a Fraction?</h3>
+              <p>A fraction represents a <strong>part of a whole</strong>. It is written as one number over another: ½, ¾, ⅔.</p>
+              <div style="background:rgba(255,107,43,0.08);border-left:3px solid var(--sun);padding:1rem;border-radius:0 8px 8px 0;margin:1rem 0;">
+                <p>📌 The <strong>top number</strong> = numerator (how many parts you have)</p>
+                <p>The <strong>bottom number</strong> = denominator (how many equal parts the whole is divided into)</p>
+              </div>
+              <h3 style="color:var(--sun);">Real-Life Example</h3>
+              <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:1rem;border-radius:8px;margin:1rem 0;">
+                🥭 Cut a mango into 4 equal pieces. Eat 1 piece → you ate 1/4 of the mango.
+              </div>
+              <h3 style="color:var(--sun);">Adding Fractions (Same Denominator)</h3>
+              <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:1rem;border-radius:8px;font-family:monospace;font-size:1.1rem;">
+                1/4 + 2/4 = 3/4
+              </div>
+              <h3 style="color:var(--sun);">Adding Fractions (Different Denominators)</h3>
+              <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:1rem;border-radius:8px;font-family:monospace;font-size:1.1rem;">
+                1/2 + 1/3 → 3/6 + 2/6 = 5/6
+              </div>
+            `
+          },
+          {
+            id: 'math-2', title: 'Introduction to Algebra',
+            meta: ['⏱ 30 min', '⭐ +50 pts', '📐 Mathematics'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">What is Algebra?</h3>
+              <p>Algebra uses <strong>letters</strong> to represent unknown numbers. The letter is called a <strong>variable</strong>.</p>
+              <div style="background:rgba(255,107,43,0.08);border-left:3px solid var(--sun);padding:1rem;border-radius:0 8px 8px 0;margin:1rem 0;">
+                <p>📌 Example: If x + 5 = 10, what is x?</p>
+                <p>→ x = 10 - 5 = <strong>5</strong></p>
+              </div>
+              <h3 style="color:var(--sun);">Simple Equations</h3>
+              <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:1rem;border-radius:8px;font-family:monospace;">
+                2x = 12 → x = 6<br>
+                x - 3 = 7 → x = 10<br>
+                3x + 2 = 14 → 3x = 12 → x = 4
+              </div>
+              <h3 style="color:var(--sun);">Real-Life Example</h3>
+              <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:1rem;border-radius:8px;margin:1rem 0;">
+                🛒 You buy some oranges at $2 each and spend $10 total.<br>
+                Let n = number of oranges.<br>
+                2n = 10 → n = <strong>5 oranges</strong>
+              </div>
+            `
+          },
+          {
+            id: 'math-3', title: 'Percentages & Ratios',
+            meta: ['⏱ 25 min', '⭐ +50 pts', '📐 Mathematics'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">What is a Percentage?</h3>
+              <p>A percentage means <strong>out of 100</strong>. The symbol is <strong>%</strong>.</p>
+              <div style="background:rgba(255,107,43,0.08);border-left:3px solid var(--sun);padding:1rem;border-radius:0 8px 8px 0;margin:1rem 0;">
+                <p>📌 50% = 50 out of 100 = one half</p>
+                <p>📌 25% = 25 out of 100 = one quarter</p>
+              </div>
+              <h3 style="color:var(--sun);">Calculating Percentages</h3>
+              <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:1rem;border-radius:8px;font-family:monospace;">
+                What is 20% of 80?<br>
+                = (20 ÷ 100) × 80 = 0.2 × 80 = <strong>16</strong>
+              </div>
+              <h3 style="color:var(--sun);">What is a Ratio?</h3>
+              <p>A ratio compares two quantities. Written as <strong>a:b</strong>.</p>
+              <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:1rem;border-radius:8px;margin:1rem 0;">
+                🎒 A class has 20 boys and 15 girls.<br>
+                Ratio of boys to girls = 20:15 = <strong>4:3</strong>
+              </div>
+            `
+          }
+        ]
+      },
+      english: {
+        name: 'English Language', icon: '📖', badge: 'Core',
+        lessons: [
+          {
+            id: 'eng-1', title: 'Parts of Speech',
+            meta: ['⏱ 20 min', '⭐ +50 pts', '📖 English'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">The 8 Parts of Speech</h3>
+              <p>Every word in English belongs to a category called a <strong>part of speech</strong>.</p>
+              <div style="display:grid;gap:0.8rem;margin:1rem 0;">
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--sun);">Noun</strong> — a person, place, thing or idea. <em>Dog, Zambia, happiness</em>
+                </div>
+                <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--teal);">Verb</strong> — an action or state. <em>Run, is, think</em>
+                </div>
+                <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--gold);">Adjective</strong> — describes a noun. <em>Big, red, happy</em>
+                </div>
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--sun);">Adverb</strong> — describes a verb or adjective. <em>Quickly, very, well</em>
+                </div>
+              </div>
+            `
+          },
+          {
+            id: 'eng-2', title: 'Writing a Good Paragraph',
+            meta: ['⏱ 25 min', '⭐ +50 pts', '📖 English'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">Structure of a Paragraph</h3>
+              <p>Every good paragraph has three parts:</p>
+              <div style="background:rgba(255,107,43,0.08);border-left:3px solid var(--sun);padding:1rem;border-radius:0 8px 8px 0;margin:1rem 0;">
+                <p>1️⃣ <strong>Topic sentence</strong> — introduces the main idea</p>
+                <p>2️⃣ <strong>Supporting sentences</strong> — give details and examples</p>
+                <p>3️⃣ <strong>Concluding sentence</strong> — wraps up the idea</p>
+              </div>
+              <h3 style="color:var(--sun);">Example Paragraph</h3>
+              <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:1rem;border-radius:8px;margin:1rem 0;font-style:italic;">
+                "Water is essential for life. All living things need water to survive — humans drink it, plants absorb it through their roots, and animals find it in rivers and lakes. Without water, no organism on earth could exist."
+              </div>
+            `
+          }
+        ]
+      },
+      science: {
+        name: 'Science', icon: '🔬', badge: 'Core',
+        lessons: [
+          {
+            id: 'sci-1', title: 'Photosynthesis',
+            meta: ['⏱ 25 min', '⭐ +50 pts', '🔬 Science'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">What is Photosynthesis?</h3>
+              <p>Photosynthesis is the process by which <strong>plants make their own food</strong> using sunlight, water, and carbon dioxide.</p>
+              <div style="background:rgba(255,107,43,0.08);border-left:3px solid var(--sun);padding:1rem;border-radius:0 8px 8px 0;margin:1rem 0;">
+                <p>📌 The equation: <strong>CO₂ + H₂O + Sunlight → Glucose + O₂</strong></p>
+              </div>
+              <h3 style="color:var(--sun);">Where does it happen?</h3>
+              <p>Photosynthesis happens in the <strong>chloroplasts</strong> — the green parts of plant cells. Chloroplasts contain <strong>chlorophyll</strong>, which is what makes plants green and captures sunlight.</p>
+              <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:1rem;border-radius:8px;margin:1rem 0;">
+                🌿 Why are plants important? They produce the oxygen we breathe and form the base of all food chains.
+              </div>
+            `
+          }
+        ]
+      },
+      history: {
+        name: 'History', icon: '🏛️', badge: 'Popular',
+        lessons: [
+          {
+            id: 'hist-1', title: 'The Scramble for Africa',
+            meta: ['⏱ 30 min', '⭐ +50 pts', '🏛️ History'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">What was the Scramble for Africa?</h3>
+              <p>The Scramble for Africa was the period between <strong>1881 and 1914</strong> when European powers rapidly colonised almost the entire African continent.</p>
+              <div style="background:rgba(255,107,43,0.08);border-left:3px solid var(--sun);padding:1rem;border-radius:0 8px 8px 0;margin:1rem 0;">
+                <p>📌 By 1914, only <strong>Ethiopia</strong> and <strong>Liberia</strong> remained independent African nations.</p>
+              </div>
+              <h3 style="color:var(--sun);">The Berlin Conference (1884–85)</h3>
+              <p>European powers met in Berlin, Germany to divide Africa among themselves. African leaders were <strong>not invited</strong>. The continent was carved up based on European interests, ignoring African ethnic groups, languages, and kingdoms.</p>
+              <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:1rem;border-radius:8px;margin:1rem 0;">
+                🌍 Major colonial powers: Britain, France, Germany, Belgium, Portugal, Italy, Spain
+              </div>
+              <h3 style="color:var(--sun);">Impact on Africa</h3>
+              <p>Colonisation brought forced labour, land seizure, cultural destruction, and artificial borders that still cause conflict today. However, it also introduced new infrastructure like railways and schools — though primarily built to serve European interests.</p>
+            `
+          },
+          {
+            id: 'hist-2', title: 'African Independence Movements',
+            meta: ['⏱ 30 min', '⭐ +50 pts', '🏛️ History'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">The Wave of Independence</h3>
+              <p>After World War II, African nations began fighting for independence. The 1950s–1970s saw most of Africa break free from colonial rule.</p>
+              <div style="background:rgba(255,107,43,0.08);border-left:3px solid var(--sun);padding:1rem;border-radius:0 8px 8px 0;margin:1rem 0;">
+                <p>📌 <strong>1957</strong> — Ghana becomes the first sub-Saharan African country to gain independence (from Britain)</p>
+                <p>📌 <strong>1960</strong> — The "Year of Africa" — 17 countries gained independence</p>
+              </div>
+              <h3 style="color:var(--sun);">Key Figures</h3>
+              <div style="display:grid;gap:0.8rem;margin:1rem 0;">
+                <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--teal);">Kwame Nkrumah</strong> — Ghana — led peaceful independence movement, first PM and President
+                </div>
+                <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--teal);">Nelson Mandela</strong> — South Africa — fought apartheid, spent 27 years in prison, became President in 1994
+                </div>
+                <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--teal);">Patrice Lumumba</strong> — Congo — first Prime Minister, advocated for pan-African unity
+                </div>
+              </div>
+            `
+          },
+          {
+            id: 'hist-3', title: 'World War I — Causes and Effects',
+            meta: ['⏱ 35 min', '⭐ +50 pts', '🏛️ History'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">The MAIN Causes</h3>
+              <p>Historians use the acronym <strong>MAIN</strong> to summarise the causes of World War I:</p>
+              <div style="display:grid;gap:0.8rem;margin:1rem 0;">
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--sun);">M</strong> — Militarism: European nations built up massive armies and navies
+                </div>
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--sun);">A</strong> — Alliances: Secret agreements meant one conflict dragged in many nations
+                </div>
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--sun);">I</strong> — Imperialism: Competition for African and Asian colonies created tensions
+                </div>
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--sun);">N</strong> — Nationalism: Strong national pride, especially in the Balkans
+                </div>
+              </div>
+              <h3 style="color:var(--sun);">The Trigger</h3>
+              <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:1rem;border-radius:8px;margin:1rem 0;">
+                💥 On 28 June 1914, Archduke Franz Ferdinand of Austria-Hungary was assassinated in Sarajevo. This triggered the alliance system and started the war.
+              </div>
+            `
+          }
+        ]
+      },
+      geography: {
+        name: 'Geography', icon: '🌍', badge: 'Popular',
+        lessons: [
+          {
+            id: 'geo-1', title: 'Climate and Weather',
+            meta: ['⏱ 25 min', '⭐ +50 pts', '🌍 Geography'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">Weather vs Climate</h3>
+              <div style="display:grid;gap:0.8rem;margin:1rem 0;">
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:1rem;border-radius:8px;">
+                  <strong style="color:var(--sun);">Weather</strong> — the short-term atmospheric conditions in a place. Example: "It is raining in Lusaka today."
+                </div>
+                <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:1rem;border-radius:8px;">
+                  <strong style="color:var(--teal);">Climate</strong> — the average weather conditions over a long period (30+ years). Example: "Zambia has a tropical climate."
+                </div>
+              </div>
+              <h3 style="color:var(--sun);">Africa's Climate Zones</h3>
+              <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:1rem;border-radius:8px;margin:1rem 0;">
+                🌴 <strong>Equatorial</strong> — Hot and wet all year. Congo Basin, parts of Kenya.<br><br>
+                ☀️ <strong>Savanna/Tropical</strong> — Hot, wet and dry seasons. Zimbabwe, Zambia, Nigeria.<br><br>
+                🏜️ <strong>Desert</strong> — Very hot and dry. Sahara (North Africa), Kalahari (South Africa).<br><br>
+                🌿 <strong>Mediterranean</strong> — Hot dry summers, mild wet winters. Cape Town, North Africa coast.
+              </div>
+            `
+          },
+          {
+            id: 'geo-2', title: 'Rivers and Water Systems',
+            meta: ['⏱ 25 min', '⭐ +50 pts', '🌍 Geography'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">Major African Rivers</h3>
+              <p>Rivers are vital for transport, farming, electricity, and drinking water across Africa.</p>
+              <div style="display:grid;gap:0.8rem;margin:1rem 0;">
+                <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--teal);">The Nile</strong> — 6,650 km — World's longest river. Flows through Uganda, Sudan, Egypt.
+                </div>
+                <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--teal);">The Congo</strong> — 4,700 km — World's deepest river. Central Africa's powerhouse.
+                </div>
+                <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--teal);">The Zambezi</strong> — 2,574 km — Home of Victoria Falls. Zimbabwe/Zambia border.
+                </div>
+                <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--teal);">The Niger</strong> — 4,180 km — Flows through Guinea, Mali, Niger, Nigeria.
+                </div>
+              </div>
+              <div style="background:rgba(255,107,43,0.08);border-left:3px solid var(--sun);padding:1rem;border-radius:0 8px 8px 0;margin:1rem 0;">
+                📌 Victoria Falls (on the Zambezi) is one of the Seven Natural Wonders of the World — and it borders Zimbabwe and Zambia!
+              </div>
+            `
+          }
+        ]
+      },
+      biology: {
+        name: 'Biology', icon: '🧬', badge: 'Sciences',
+        lessons: [
+          {
+            id: 'bio-1', title: 'The Cell — Basic Unit of Life',
+            meta: ['⏱ 30 min', '⭐ +50 pts', '🧬 Biology'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">What is a Cell?</h3>
+              <p>The cell is the <strong>basic structural and functional unit</strong> of all living organisms. All living things are made of cells.</p>
+              <h3 style="color:var(--sun);">Animal Cell vs Plant Cell</h3>
+              <div style="display:grid;gap:0.8rem;margin:1rem 0;">
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:1rem;border-radius:8px;">
+                  <strong style="color:var(--sun);">Animal Cell</strong><br>
+                  ✓ Cell membrane &nbsp; ✓ Nucleus &nbsp; ✓ Cytoplasm &nbsp; ✓ Mitochondria<br>
+                  ✗ No cell wall &nbsp; ✗ No chloroplasts &nbsp; ✗ No large vacuole
+                </div>
+                <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:1rem;border-radius:8px;">
+                  <strong style="color:var(--teal);">Plant Cell</strong><br>
+                  ✓ Cell wall &nbsp; ✓ Chloroplasts &nbsp; ✓ Large central vacuole<br>
+                  ✓ Cell membrane &nbsp; ✓ Nucleus &nbsp; ✓ Mitochondria
+                </div>
+              </div>
+              <h3 style="color:var(--sun);">Key Organelles</h3>
+              <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:1rem;border-radius:8px;">
+                🧠 <strong>Nucleus</strong> — control centre, contains DNA<br><br>
+                ⚡ <strong>Mitochondria</strong> — produces energy (ATP) for the cell<br><br>
+                🌿 <strong>Chloroplast</strong> — carries out photosynthesis (plants only)<br><br>
+                💧 <strong>Vacuole</strong> — stores water and waste
+              </div>
+            `
+          },
+          {
+            id: 'bio-2', title: 'Human Digestive System',
+            meta: ['⏱ 30 min', '⭐ +50 pts', '🧬 Biology'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">What is Digestion?</h3>
+              <p>Digestion is the process of <strong>breaking down food</strong> into small molecules that the body can absorb and use.</p>
+              <h3 style="color:var(--sun);">The Journey of Food</h3>
+              <div style="display:grid;gap:0.6rem;margin:1rem 0;">
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong>1. Mouth</strong> — teeth chew food, saliva starts breaking down starch
+                </div>
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong>2. Oesophagus</strong> — muscular tube that carries food to the stomach
+                </div>
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong>3. Stomach</strong> — acid and enzymes break down protein, food becomes chyme
+                </div>
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong>4. Small Intestine</strong> — nutrients absorbed into the bloodstream here
+                </div>
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong>5. Large Intestine</strong> — water absorbed, waste formed
+                </div>
+                <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong>6. Rectum/Anus</strong> — waste expelled from the body
+                </div>
+              </div>
+            `
+          }
+        ]
+      },
+      chemistry: {
+        name: 'Chemistry', icon: '⚗️', badge: 'Sciences',
+        lessons: [
+          {
+            id: 'chem-1', title: 'Atoms and the Periodic Table',
+            meta: ['⏱ 30 min', '⭐ +50 pts', '⚗️ Chemistry'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">What is an Atom?</h3>
+              <p>An atom is the <strong>smallest unit of matter</strong> that retains the properties of an element. Everything around you is made of atoms.</p>
+              <div style="background:rgba(255,107,43,0.08);border-left:3px solid var(--sun);padding:1rem;border-radius:0 8px 8px 0;margin:1rem 0;">
+                <p>📌 <strong>Protons</strong> (+) — in the nucleus, determine the element</p>
+                <p>📌 <strong>Neutrons</strong> (0) — in the nucleus, determine the isotope</p>
+                <p>📌 <strong>Electrons</strong> (−) — orbit the nucleus in shells</p>
+              </div>
+              <h3 style="color:var(--sun);">The Periodic Table</h3>
+              <p>Elements are arranged in the periodic table by increasing <strong>atomic number</strong> (number of protons).</p>
+              <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:1rem;border-radius:8px;margin:1rem 0;">
+                🔢 <strong>Periods</strong> (rows) — elements in the same row have the same number of electron shells<br><br>
+                📊 <strong>Groups</strong> (columns) — elements in the same column have similar chemical properties
+              </div>
+              <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:1rem;border-radius:8px;margin:1rem 0;">
+                💡 Hydrogen (H) has 1 proton. Carbon (C) has 6. Oxygen (O) has 8. Gold (Au) has 79.
+              </div>
+            `
+          },
+          {
+            id: 'chem-2', title: 'Chemical Reactions and Equations',
+            meta: ['⏱ 30 min', '⭐ +50 pts', '⚗️ Chemistry'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">What is a Chemical Reaction?</h3>
+              <p>A chemical reaction occurs when substances (reactants) are transformed into new substances (products). Atoms are rearranged but not created or destroyed.</p>
+              <h3 style="color:var(--sun);">Types of Reactions</h3>
+              <div style="display:grid;gap:0.8rem;margin:1rem 0;">
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--sun);">Combustion</strong> — fuel + oxygen → carbon dioxide + water<br>
+                  <code style="font-size:0.85rem;">CH₄ + 2O₂ → CO₂ + 2H₂O</code>
+                </div>
+                <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--teal);">Neutralisation</strong> — acid + base → salt + water<br>
+                  <code style="font-size:0.85rem;">HCl + NaOH → NaCl + H₂O</code>
+                </div>
+                <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--gold);">Decomposition</strong> — one compound breaks into simpler ones<br>
+                  <code style="font-size:0.85rem;">2H₂O → 2H₂ + O₂</code>
+                </div>
+              </div>
+            `
+          }
+        ]
+      },
+      physics: {
+        name: 'Physics', icon: '⚛️', badge: 'Sciences',
+        lessons: [
+          {
+            id: 'phys-1', title: "Newton's Laws of Motion",
+            meta: ['⏱ 30 min', '⭐ +50 pts', '⚛️ Physics'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">Sir Isaac Newton (1643–1727)</h3>
+              <p>Newton described three laws that explain how objects move. These laws are fundamental to all of physics and engineering.</p>
+              <div style="display:grid;gap:0.8rem;margin:1rem 0;">
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:1rem;border-radius:8px;">
+                  <strong style="color:var(--sun);">First Law — Inertia</strong><br>
+                  An object at rest stays at rest. An object in motion stays in motion — unless acted on by an external force.<br>
+                  <em style="color:var(--muted);font-size:0.85rem;">Example: A ball on a table stays still until you push it.</em>
+                </div>
+                <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:1rem;border-radius:8px;">
+                  <strong style="color:var(--teal);">Second Law — F = ma</strong><br>
+                  Force = mass × acceleration. The bigger the mass, the more force needed to accelerate it.<br>
+                  <em style="color:var(--muted);font-size:0.85rem;">Example: Pushing a heavy car requires more force than pushing a bicycle.</em>
+                </div>
+                <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);padding:1rem;border-radius:8px;">
+                  <strong style="color:var(--gold);">Third Law — Action and Reaction</strong><br>
+                  For every action there is an equal and opposite reaction.<br>
+                  <em style="color:var(--muted);font-size:0.85rem;">Example: A rocket pushes gas down → gas pushes rocket up.</em>
+                </div>
+              </div>
+            `
+          },
+          {
+            id: 'phys-2', title: 'Electricity and Circuits',
+            meta: ['⏱ 30 min', '⭐ +50 pts', '⚛️ Physics'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">What is Electric Current?</h3>
+              <p>Electric current is the <strong>flow of electrons</strong> through a conductor (like a wire). It is measured in <strong>Amperes (A)</strong>.</p>
+              <div style="background:rgba(255,107,43,0.08);border-left:3px solid var(--sun);padding:1rem;border-radius:0 8px 8px 0;margin:1rem 0;">
+                <p>📌 <strong>Voltage (V)</strong> — the "push" that drives current. Measured in Volts.</p>
+                <p>📌 <strong>Current (I)</strong> — the flow of charge. Measured in Amperes.</p>
+                <p>📌 <strong>Resistance (R)</strong> — opposition to current flow. Measured in Ohms (Ω).</p>
+              </div>
+              <h3 style="color:var(--sun);">Ohm's Law</h3>
+              <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:1rem;border-radius:8px;text-align:center;font-size:1.4rem;font-family:monospace;margin:1rem 0;">
+                V = I × R
+              </div>
+              <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:1rem;border-radius:8px;margin:1rem 0;">
+                💡 Example: A light bulb has resistance 10Ω and current 2A flowing through it.<br>
+                Voltage = 2 × 10 = <strong>20V</strong>
+              </div>
+            `
+          }
+        ]
+      },
+      economics: {
+        name: 'Economics', icon: '📈', badge: 'Commerce',
+        lessons: [
+          {
+            id: 'econ-1', title: 'Supply and Demand',
+            meta: ['⏱ 25 min', '⭐ +50 pts', '📈 Economics'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">What is Demand?</h3>
+              <p>Demand is the <strong>quantity of a good consumers are willing and able to buy</strong> at a given price. When price goes up, demand usually goes down.</p>
+              <div style="background:rgba(255,107,43,0.08);border-left:3px solid var(--sun);padding:1rem;border-radius:0 8px 8px 0;margin:1rem 0;">
+                📌 <strong>Law of Demand:</strong> As price increases → quantity demanded decreases (and vice versa)
+              </div>
+              <h3 style="color:var(--sun);">What is Supply?</h3>
+              <p>Supply is the <strong>quantity of a good producers are willing and able to sell</strong> at a given price. When price goes up, producers want to supply more.</p>
+              <div style="background:rgba(0,201,167,0.08);border-left:3px solid var(--teal);padding:1rem;border-radius:0 8px 8px 0;margin:1rem 0;">
+                📌 <strong>Law of Supply:</strong> As price increases → quantity supplied increases
+              </div>
+              <h3 style="color:var(--sun);">Equilibrium</h3>
+              <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);padding:1rem;border-radius:8px;margin:1rem 0;">
+                ⚖️ Equilibrium is the point where supply equals demand — the market-clearing price. At this price, there is no shortage or surplus.
+              </div>
+            `
+          },
+          {
+            id: 'econ-2', title: 'Types of Economic Systems',
+            meta: ['⏱ 25 min', '⭐ +50 pts', '📈 Economics'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">Three Main Economic Systems</h3>
+              <div style="display:grid;gap:0.8rem;margin:1rem 0;">
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:1rem;border-radius:8px;">
+                  <strong style="color:var(--sun);">Market Economy (Capitalism)</strong><br>
+                  Prices and production decided by supply and demand. Private ownership. Examples: USA, UK.
+                </div>
+                <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:1rem;border-radius:8px;">
+                  <strong style="color:var(--teal);">Command Economy (Socialism)</strong><br>
+                  Government controls production and prices. Examples: Cuba, North Korea.
+                </div>
+                <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);padding:1rem;border-radius:8px;">
+                  <strong style="color:var(--gold);">Mixed Economy</strong><br>
+                  Combination of market and government control. Most African countries use this. Examples: Kenya, South Africa, Zambia.
+                </div>
+              </div>
+            `
+          }
+        ]
+      },
+      accounting: {
+        name: 'Accounting', icon: '🧾', badge: 'Commerce',
+        lessons: [
+          {
+            id: 'acc-1', title: 'The Accounting Equation',
+            meta: ['⏱ 25 min', '⭐ +50 pts', '🧾 Accounting'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">The Foundation of Accounting</h3>
+              <p>Everything in accounting is based on one simple equation:</p>
+              <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:1.5rem;border-radius:8px;text-align:center;font-size:1.4rem;font-family:monospace;margin:1rem 0;">
+                Assets = Liabilities + Owner's Equity
+              </div>
+              <div style="display:grid;gap:0.8rem;margin:1rem 0;">
+                <div style="background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--sun);">Assets</strong> — things the business OWNS. Cash, buildings, equipment, inventory.
+                </div>
+                <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--teal);">Liabilities</strong> — things the business OWES. Loans, unpaid bills, mortgages.
+                </div>
+                <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);padding:0.8rem;border-radius:8px;">
+                  <strong style="color:var(--gold);">Owner's Equity</strong> — what the owner actually owns after paying all debts.
+                </div>
+              </div>
+              <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:1rem;border-radius:8px;margin:1rem 0;">
+                💼 Example: A business has assets worth $50,000 and owes $20,000 in loans.<br>
+                Owner's Equity = $50,000 − $20,000 = <strong>$30,000</strong>
+              </div>
+            `
+          },
+          {
+            id: 'acc-2', title: 'Debits and Credits',
+            meta: ['⏱ 30 min', '⭐ +50 pts', '🧾 Accounting'],
+            content: `
+              <h3 style="color:var(--sun);margin-top:0;">The Double-Entry System</h3>
+              <p>In accounting, every transaction has <strong>two sides</strong> — a debit and a credit. They must always balance.</p>
+              <div style="background:rgba(255,107,43,0.08);border-left:3px solid var(--sun);padding:1rem;border-radius:0 8px 8px 0;margin:1rem 0;">
+                <p>📌 <strong>Debit (Dr)</strong> — left side of an account</p>
+                <p>📌 <strong>Credit (Cr)</strong> — right side of an account</p>
+              </div>
+              <h3 style="color:var(--sun);">The Rules</h3>
+              <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:1rem;border-radius:8px;margin:1rem 0;">
+                Assets: Debit to increase ↑ &nbsp;|&nbsp; Credit to decrease ↓<br><br>
+                Liabilities: Credit to increase ↑ &nbsp;|&nbsp; Debit to decrease ↓<br><br>
+                Expenses: Debit to increase ↑<br><br>
+                Revenue: Credit to increase ↑
+              </div>
+              <div style="background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);padding:1rem;border-radius:8px;margin:1rem 0;">
+                💼 Example: You buy a computer for $1,000 cash.<br>
+                Dr Computer (Asset) $1,000<br>
+                Cr Cash (Asset) $1,000
+              </div>
+            `
+          }
+        ]
+      }
+    };
+
+    // ── Page Logic ───────────────────────────────────────────────
+    let currentSubjectId = '';
+    let currentLessonIdx = 0;
+    let lessonData       = null;
+    const chatMessages   = [];
+
+    window.addEventListener('load', () => {
+      const params    = new URLSearchParams(window.location.search);
+      const subjectId = params.get('subject');
+      const lessonId  = params.get('lesson');
+
+      if (subjectId && LESSONS[subjectId]) {
+        document.getElementById('lesson-page').style.display = 'block';
+        loadSubject(subjectId, lessonId);
+      } else if (subjectId) {
+        // Subject exists in ALL_SUBJECTS but no lesson data — go to AI chat
+        document.getElementById('ai-page').style.display = 'block';
+        prefillSubject(subjectId);
+      } else {
+        document.getElementById('ai-page').style.display = 'block';
+      }
+    });
+
+    function loadSubject(subjectId, lessonId) {
+      currentSubjectId = subjectId;
+      lessonData       = LESSONS[subjectId];
+
+      // Subject header
+      document.getElementById('bc-subject').textContent     = lessonData.name;
+      document.getElementById('subject-icon').textContent   = lessonData.icon;
+      document.getElementById('subject-title').textContent  = lessonData.name;
+      document.getElementById('subject-badge').textContent  = lessonData.badge;
+
+      const student = JSON.parse(localStorage.getItem('edustar_current') || 'null');
+      const grade   = student?.grade || '';
+      document.getElementById('subject-meta').textContent =
+        `${grade}${grade ? ' · ' : ''}${lessonData.lessons.length} lessons`;
+
+      // Find lesson index
+      if (lessonId) {
+        const idx = lessonData.lessons.findIndex(l => l.id === lessonId);
+        currentLessonIdx = idx >= 0 ? idx : 0;
+      } else {
+        currentLessonIdx = 0;
+      }
+
+      renderSidebar();
+      loadLesson(currentLessonIdx);
+    }
+
+    function renderSidebar() {
+      const lessons   = lessonData.lessons;
+      const completed = getCompleted();
+      const doneCount = lessons.filter(l => completed.includes(l.id)).length;
+
+      document.getElementById('sidebar-progress').textContent = `${doneCount} / ${lessons.length}`;
+      document.getElementById('sidebar-xp-bar').style.width   = `${(doneCount / lessons.length) * 100}%`;
+
+      document.getElementById('lesson-list').innerHTML = lessons.map((l, i) => {
+        const isDone = completed.includes(l.id);
+        const isActive = i === currentLessonIdx;
+        return `<button onclick="loadLesson(${i})" style="
+          text-align:left;width:100%;padding:0.7rem 0.9rem;border-radius:var(--radius-sm);
+          border:1px solid ${isActive ? 'rgba(255,107,43,0.5)' : isDone ? 'rgba(0,201,167,0.3)' : 'var(--border)'};
+          background:${isActive ? 'rgba(255,107,43,0.1)' : isDone ? 'rgba(0,201,167,0.08)' : 'transparent'};
+          color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.88rem;
+          display:flex;align-items:center;gap:0.6rem;
+        ">
+          <span style="font-size:1rem;">${isDone ? '✅' : isActive ? '▶️' : '⬜'}</span>
+          ${l.title}
+        </button>`;
+      }).join('');
+    }
+
+    function loadLesson(idx) {
+      currentLessonIdx = idx;
+      const lesson     = lessonData.lessons[idx];
+      const completed  = getCompleted();
+      const isDone     = completed.includes(lesson.id);
+
+      document.getElementById('lesson-title').textContent    = lesson.title;
+      document.getElementById('lesson-content').innerHTML    = lesson.content;
+      document.getElementById('lesson-meta-tags').innerHTML  = lesson.meta.map(m =>
+        `<span style="background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:50px;padding:0.2rem 0.7rem;font-size:0.78rem;color:var(--muted);">${m}</span>`
+      ).join('');
+
+      const completeBtn = document.getElementById('complete-btn');
+      if (isDone) {
+        completeBtn.textContent  = '✅ Completed';
+        completeBtn.disabled     = true;
+        completeBtn.style.opacity = '0.6';
+      } else {
+        completeBtn.textContent  = '✅ Mark as Complete (+50 pts)';
+        completeBtn.disabled     = false;
+        completeBtn.style.opacity = '1';
+      }
+
+      // Show next button if not last lesson
+      const nextBtn = document.getElementById('next-btn');
+      nextBtn.style.display = idx < lessonData.lessons.length - 1 ? 'block' : 'none';
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      renderSidebar();
+    }
+
+    function markComplete() {
+      const lesson    = lessonData.lessons[currentLessonIdx];
+      const completed = getCompleted();
+      if (completed.includes(lesson.id)) return;
+
+      completed.push(lesson.id);
+      localStorage.setItem('edustar_completed', JSON.stringify(completed));
+
+      // Award XP
+      const student = JSON.parse(localStorage.getItem('edustar_current') || 'null');
+      if (student) {
+        student.points = (student.points || 0) + 50;
+        student.level  = Math.floor(student.points / 500) + 1;
+        localStorage.setItem('edustar_current', JSON.stringify(student));
+      }
+
+      const btn = document.getElementById('complete-btn');
+      btn.textContent  = '✅ Completed';
+      btn.disabled     = true;
+      btn.style.opacity = '0.6';
+
+      renderSidebar();
+
+      // Auto advance
+      if (currentLessonIdx < lessonData.lessons.length - 1) {
+        setTimeout(() => loadLesson(currentLessonIdx + 1), 800);
+      }
+    }
+
+    function nextLesson() {
+      if (currentLessonIdx < lessonData.lessons.length - 1) {
+        loadLesson(currentLessonIdx + 1);
+      }
+    }
+
+    function getCompleted() {
+      try { return JSON.parse(localStorage.getItem('edustar_completed') || '[]'); } catch { return []; }
+    }
+
+    function goToAITutor() {
+      window.location.href = '/lesson';
+    }
+
+    function goToQuiz() {
+      window.location.href = '/quiz?subject=' + currentSubjectId;
+    }
+
+    function prefillSubject(subjectId) {
+      const subj = ALL_SUBJECTS?.find(s => s.id === subjectId);
+      if (subj) {
+        const input = document.getElementById('chat-input');
+        if (input) input.placeholder = `Ask anything about ${subj.name}...`;
+      }
+    }
+
+    // ── AI Chat ──────────────────────────────────────────────────
     function prefill(text) {
       document.getElementById('chat-input').value = text;
       document.getElementById('chat-input').focus();
     }
+
     function addMessage(role, text) {
       const box = document.getElementById('chat-messages');
       const div = document.createElement('div');
@@ -46,27 +816,37 @@
       box.appendChild(div);
       box.scrollTop = box.scrollHeight;
     }
+
     async function sendMessage() {
       const input = document.getElementById('chat-input');
       const text  = input.value.trim();
       if (!text) return;
       input.value = '';
       addMessage('user', text);
-      messages.push({ role:'user', content:text });
+      chatMessages.push({ role:'user', content:text });
       const btn = document.getElementById('send-btn');
       btn.disabled = true; btn.textContent = '...';
-      const student = JSON.parse(localStorage.getItem('edustar_current') || 'null');
-      const system  = student
-        ? `You are EduStar's AI tutor for a ${student.grade} student in ${COUNTRY_NAMES[student.country]||student.country}. Adapt your explanations to their level. Keep responses clear and encouraging.`
-        : undefined;
       try {
-        const res  = await fetch('/api/ai/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ messages, system }) });
-        const data = await res.json();
-        const reply = data.ok ? data.content[0].text : "Sorry, I'm having trouble right now. Please try again!";
-        addMessage('assistant', reply);
-        messages.push({ role:'assistant', content:reply });
-      } catch(e) { addMessage('assistant',"Connection error. Please check your internet and try again."); }
-      btn.disabled = false; btn.textContent = 'Send';
+        const student = JSON.parse(localStorage.getItem('edustar_current') || 'null');
+        const res  = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: chatMessages,
+            system: student
+              ? `You are EduStar's AI tutor for a ${student.grade} student in ${student.country}. Adapt explanations to their level.`
+              : undefined
+          })
+        });
+        const data  = await res.json();
+        const reply = data.content?.[0]?.text || 'Sorry, I\'m having trouble right now. Please try again!';
+        addMessage('ai', reply);
+        chatMessages.push({ role:'assistant', content:reply });
+      } catch {
+        addMessage('ai', 'Sorry, I\'m having trouble right now. Please try again!');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Send';
+      }
     }
   </script>
 
